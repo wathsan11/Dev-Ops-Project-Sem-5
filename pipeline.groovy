@@ -78,6 +78,8 @@ pipeline {
             sh 'docker compose down -v'
             echo 'login out from Docker Hub'
             sh 'docker logout'
+            echo 'Removing dangling images'
+            sh 'docker image prune -f'
         }
     }
 }
