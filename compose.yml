@@ -17,7 +17,7 @@ services:
       dockerfile: Dockerfile
     container_name: diary-backend
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/diaryAPI
       SPRING_DATA_MONGODB_DATABASE: diaryAPI
