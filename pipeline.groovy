@@ -48,7 +48,7 @@ pipeline {
                         // some block
                         sh '''
                             echo "Logging into Docker Hub..."
-                            docker login -u wathsan -p $dev-pass
+                            docker login -u wathsan -p ${dev-pass}
                          '''
                     }
             }
