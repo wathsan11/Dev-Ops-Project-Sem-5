@@ -1,10 +1,11 @@
 pipeline {
-    agent any
+    agent { label 'linux' } // ensure a Linux agent with Docker + Git + shell
 
     stages {
         stage('SCM Checkout') {
             steps {
                 retry(3) {
+                    // checkout the main branch
                     git branch: 'main', url: 'https://github.com/wathsan11/Dev-Ops-Project-Sem-5.git'
                 }
             }
@@ -13,25 +14,25 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('backend') {
-                    // Build the Maven project and create target/backend-0.0.1-SNAPSHOT.jar
-                    sh 'mvn clean package -DskipTests'
+                    // use the Maven wrapper to build (non-interactive)
+                    sh './mvnw -B -DskipTests clean package'
                 }
             }
         }
 
         stage('Build & Start Docker Compose') {
             steps {
-                // Run Docker Compose after backend is built
+                // run docker compose from repo root (explicit file)
                 sh '''
-                    docker compose down -v
-                    docker compose up --build -d
+                    docker compose -f compose.yml down -v || true
+                    docker compose -f compose.yml up --build -d
                 '''
             }
         }
 
         stage('Verify Containers') {
             steps {
-                sh 'docker ps'
+                sh 'docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"'
             }
         }
     }
@@ -39,7 +40,8 @@ pipeline {
     post {
         always {
             echo 'Cleaning up: stopping containers'
-            sh 'docker compose down -v'
+            sh 'docker compose -f compose.yml down -v || true'
+            archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
         }
     }
 }
