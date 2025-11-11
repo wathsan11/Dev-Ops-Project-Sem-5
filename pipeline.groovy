@@ -11,22 +11,30 @@ pipeline{
             }
         }
 
-        stage('Build Docker Image') {
+       stage('Build & Start Docker Compose') {
             steps {
-                script {
-                    // Define image name and tag
-                    def imageName = "wathsan/diaryapp:${env.BUILD_NUMBER}"
-
-                    echo "Building Docker image: ${imageName}"
-
-                    // Build image
-                    sh "docker build -t ${imageName} ."
-
-                    // Save it to a variable if you need it later (for push, deploy, etc.)
-                    dockerImage = docker.image(imageName)
-                }
+                // Make sure to run shell commands
+                sh '''
+                   # Stop & remove previous containers
+                    docker compose down -v
+                    
+                    # Build images and start services in detached mode
+                    docker compose up --build -d
+                '''
             }
         }
+        stage('Verify Containers') {
+            steps {
+                sh 'docker ps'
+            }
+        }
+        
+     post {
+        always {
+            echo 'Cleaning up: stopping containers'
+            sh 'docker compose down -v'
+        }
+    }       
     }
 
 }
