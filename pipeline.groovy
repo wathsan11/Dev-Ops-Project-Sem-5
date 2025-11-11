@@ -1,43 +1,45 @@
-pipeline{
-
+pipeline {
     agent any
 
-    stages{
-        stage('SCM Checkout'){
-            steps{
-                retry(3){
+    stages {
+        stage('SCM Checkout') {
+            steps {
+                retry(3) {
                     git branch: 'main', url: 'https://github.com/wathsan11/Dev-Ops-Project-Sem-5.git'
                 }
             }
         }
 
-       stage('Build & Start Docker Compose') {
+        stage('Build Backend') {
             steps {
-                // Make sure to run shell commands
+                dir('backend') {
+                    // Build the Maven project and create target/backend-0.0.1-SNAPSHOT.jar
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+
+        stage('Build & Start Docker Compose') {
+            steps {
+                // Run Docker Compose after backend is built
                 sh '''
-                   # Stop & remove previous containers
                     docker compose down -v
-                    
-                    # Build images and start services in detached mode
                     docker compose up --build -d
                 '''
             }
         }
+
         stage('Verify Containers') {
             steps {
                 sh 'docker ps'
             }
         }
-
-   
     }
 
-     post {
+    post {
         always {
             echo 'Cleaning up: stopping containers'
             sh 'docker compose down -v'
-       
         }
-    }    
-
+    }
 }
