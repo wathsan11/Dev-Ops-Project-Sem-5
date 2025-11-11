@@ -14,20 +14,13 @@ pipeline {
             steps {
                 dir('backend') {
                     // Build the Maven project and create target/backend-0.0.1-SNAPSHOT.jar
-                    sh 'stage('Build Backend') {
-    steps {
-        dir('backend') {
-            sh '''
-                docker run --rm \
-                    -v "$PWD":/app \
-                    -w /app \
-                    maven:3.9.6-eclipse-temurin-21 \
-                    mvn clean package -DskipTests
-            '''
-        }
-    }
-}
-'
+                    sh '''
+                         docker run --rm \
+                            -v "$PWD":/app \
+                            -w /app \
+                            maven:3.9.6-eclipse-temurin-21 \
+                            mvn clean package -DskipTests
+                       '''
                 }
             }
         }
