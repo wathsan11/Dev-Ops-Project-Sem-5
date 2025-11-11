@@ -28,13 +28,16 @@ pipeline{
                 sh 'docker ps'
             }
         }
-        
+
+   
+    }
+
      post {
         always {
             echo 'Cleaning up: stopping containers'
             sh 'docker compose down -v'
+       
         }
-    }       
-    }
+    }    
 
 }
