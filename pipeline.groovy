@@ -53,12 +53,31 @@ pipeline {
             }
         }
 
+        stage('Push Images to Docker Hub') {
+            steps {
+                sh '''
+                    echo "Tagging backend and frontend images..."
+                    docker tag dev-ops-sem5-pipeline-backend:latest wathsan/diary-backend:latest
+                    docker tag dev-ops-sem5-pipeline-frontend:latest wathsan/diary-frontend:latest
+
+                    echo "Pushing backend image..."
+                    docker push wathsan/diary-backend:latest
+
+                    echo "Pushing frontend image..."
+                    docker push wathsan/diary-frontend:latest
+                '''
+            }
+        }
+
+
     }
 
     post {
         always {
             echo 'Cleaning up: stopping containers'
             sh 'docker compose down -v'
+            echo 'login out from Docker Hub'
+            sh 'docker logout'
         }
     }
 }
