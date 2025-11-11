@@ -40,6 +40,19 @@ pipeline {
                 sh 'docker ps'
             }
         }
+
+
+        stage('Login to Docker Hub') {
+            steps {
+                    withCredentials([string(credentialsId: 'test-password', variable: 'dev-pass')]) {
+                        // some block
+                        sh '''
+                            echo "Logging into Docker Hub..."
+                            docker login -u wathsan -p $dev-pass
+                         '''
+                    }
+            }
+        }
     }
 
     post {
