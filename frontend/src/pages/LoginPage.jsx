@@ -1,10 +1,10 @@
 import React from 'react'
 import Login from '../component/Login/Login'
 
-const LoginPage = () => {
+const LoginPage = ({ setPage }) => {
   return (
     <div>
-      <Login/>
+      <Login onSwitchToSignup={setPage} onLoginSuccess={setPage} />
     </div>
   )
 }

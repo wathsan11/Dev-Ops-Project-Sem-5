@@ -1,16 +1,22 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import LoginPage from './pages/LoginPage'
+import SignUpPage from './pages/SignUpPage'
+import NotesPage from './pages/NotesPage'
 import './index.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [page, setPage] = useState('login')
 
   return (
     <>
-     <LoginPage/>
+      {page === 'login' ? (
+        <LoginPage setPage={setPage} />
+      ) : page === 'signup' ? (
+        <SignUpPage setPage={setPage} />
+      ) : (
+        <NotesPage setPage={setPage} />
+      )}
     </>
   )
 }

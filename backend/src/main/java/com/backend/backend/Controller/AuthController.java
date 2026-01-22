@@ -22,8 +22,9 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> Signup(@RequestBody SignupRequest signupRequest){
-        Users user = usersService.RegisterUser(signupRequest);
+      
         try {
+            usersService.RegisterUser(signupRequest);
             return ResponseEntity.ok("User registered succesfully!");
         }
         catch (RuntimeException e){

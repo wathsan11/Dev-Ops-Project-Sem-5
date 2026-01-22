@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useState } from "react";
 
-const Login = () => {
+const Login = ({ onSwitchToSignup, onLoginSuccess }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -35,7 +35,8 @@ const Login = () => {
             role: res.data.role,
           })
         );
-        // Redirect or update app state here
+        // notify parent that login succeeded so app can show notes
+        onLoginSuccess && onLoginSuccess('notes');
       } else {
         setError(res.data.message || "Invalid Login");
       }
@@ -108,9 +109,13 @@ const Login = () => {
 
           <p className="text-center text-gray-600 text-sm">
             Don't have an account?{" "}
-            <a href="#" className="text-orange-500 hover:underline font-medium">
+            <button
+              type="button"
+              onClick={() => onSwitchToSignup && onSwitchToSignup('signup')}
+              className="text-orange-500 hover:underline font-medium"
+            >
               Sign up
-            </a>
+            </button>
           </p>
         </form>
       </div>
