@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import api from '../api'
 
 const NotesPage = ({ setPage }) => {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [noteDate, setNoteDate] = useState(new Date().toISOString().slice(0,10))
+  const [noteDate, setNoteDate] = useState(new Date().toISOString().slice(0, 10))
   const [notes, setNotes] = useState([])
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -18,10 +18,12 @@ const NotesPage = ({ setPage }) => {
 
   const fetchNotes = async () => {
     try {
-      const res = await axios.get(`http://localhost:8081/api/notes/user/${username}`)
+      const res = await api.get(`/api/notes/user/${username}`)
       setNotes(res.data || [])
     } catch (err) {
-      setError('Could not load notes')
+      console.error('FETCH NOTES ERROR:', err.response || err)
+      const errorMsg = err.response?.data?.message || err.response?.data || err.message || 'Could not load notes'
+      setError(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg)
     }
   }
 
@@ -42,17 +44,20 @@ const NotesPage = ({ setPage }) => {
         content,
         noteDate
       }
-      const res = await axios.post('http://localhost:8081/api/notes', payload)
+      console.log('USERNAME:', username)
+      const res = await api.post('/api/notes', payload)
       setSuccess('Saved')
       setTitle('')
       setContent('')
       fetchNotes()
     } catch (err) {
-      setError('Save failed')
+      console.error('SAVE ERROR:', err.response || err)
+      const errorMsg = err.response?.data?.message || err.response?.data || err.message || 'Save failed'
+      setError(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg)
     }
   }
 
-  const handleLogout = ()=>{
+  const handleLogout = () => {
     localStorage.removeItem('user')
     setPage('login')
   }
@@ -73,15 +78,15 @@ const NotesPage = ({ setPage }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Date</label>
-            <input type="date" value={noteDate} onChange={e=>setNoteDate(e.target.value)} className="mt-1 block w-full rounded border px-3 py-2" />
+            <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)} className="mt-1 block w-full rounded border px-3 py-2" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Title</label>
-            <input value={title} onChange={e=>setTitle(e.target.value)} className="mt-1 block w-full rounded border px-3 py-2" />
+            <input value={title} onChange={e => setTitle(e.target.value)} className="mt-1 block w-full rounded border px-3 py-2" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Content</label>
-            <textarea value={content} onChange={e=>setContent(e.target.value)} rows={6} className="mt-1 block w-full rounded border px-3 py-2" />
+            <textarea value={content} onChange={e => setContent(e.target.value)} rows={6} className="mt-1 block w-full rounded border px-3 py-2" />
           </div>
           <div>
             <button type="submit" className="bg-orange-400 text-white px-4 py-2 rounded">Save Note</button>
@@ -93,8 +98,8 @@ const NotesPage = ({ setPage }) => {
         <h3 className="text-xl font-semibold mb-4">Your Notes</h3>
         {notes.length === 0 && <div className="text-gray-600">No notes yet.</div>}
         <div className="space-y-4">
-          {notes.map((n)=> (
-            <div key={n._id} className="border rounded p-4 bg-white">
+          {notes.map((n, index) => (
+            <div key={n._id?.$oid || n._id?.toString() || index} className="border rounded p-4 bg-white">
               <div className="text-sm text-gray-500 mb-1">{n.noteDate}</div>
               <div className="font-semibold text-lg">{n.title}</div>
               <div className="mt-2 text-gray-800 whitespace-pre-wrap">{n.content}</div>

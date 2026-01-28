@@ -1,4 +1,5 @@
 import axios from "axios";
+import api from '../../api'
 import React, { useState } from "react";
 
 const SignUp = ({ onSwitchToLogin }) => {
@@ -25,7 +26,7 @@ const SignUp = ({ onSwitchToLogin }) => {
     }
 
     try {
-      const res = await axios.post("http://localhost:8081/api/auth/signup", {
+      const res = await api.post("/api/auth/signup", {
         username,
         email,
         password,

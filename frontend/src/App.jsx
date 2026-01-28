@@ -6,7 +6,10 @@ import NotesPage from './pages/NotesPage'
 import './index.css'
 
 function App() {
-  const [page, setPage] = useState('login')
+  const [page, setPage] = useState(() => {
+    const user = localStorage.getItem('user')
+    return user ? 'notes' : 'login'
+  })
 
   return (
     <>
