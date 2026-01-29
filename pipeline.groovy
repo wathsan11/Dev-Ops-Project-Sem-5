@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        AWS_REGION = 'ap-south-1'
+        DOCKER_HUB_USER = 'wathsan'
+        EC2_PUBLIC_IP = ''
+    }
+
     stages {
         stage('SCM Checkout') {
             steps {
@@ -10,10 +16,40 @@ pipeline {
             }
         }
 
+        stage('Infrastructure - Terraform') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds',
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                ]]) {
+                    dir('terraform') {
+                        sh 'terraform init'
+                        sh 'terraform apply -auto-approve'
+                        script {
+                            env.EC2_PUBLIC_IP = sh(script: "terraform output -raw instance_public_ip", returnStdout: true).trim()
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Configuration - Ansible') {
+            steps {
+                dir('ansible') {
+                    // Note: Ensure the SSH key is available to Jenkins
+                    sh """
+                        echo "[app_servers]\n${env.EC2_PUBLIC_IP} ansible_user=ubuntu ansible_ssh_private_key_file=/var/jenkins_home/.ssh/id_rsa" > inventory.ini
+                        ansible-playbook -i inventory.ini playbook.yml --ssh-common-args='-o StrictHostKeyChecking=no'
+                    """
+                }
+            }
+        }
+
         stage('Build Backend') {
             steps {
                 dir('backend') {
-                    // Build the Maven project and create target/backend-0.0.1-SNAPSHOT.jar
                     sh '''
                          docker run --rm \
                             -v "$PWD":/app \
@@ -25,30 +61,10 @@ pipeline {
             }
         }
 
-        stage('Build & Start Docker Compose') {
-            steps {
-                // Run Docker Compose after backend is built
-                sh '''
-                    docker compose down -v
-                    docker compose up --build -d
-                '''
-            }
-        }
-
-        stage('Verify Containers') {
-            steps {
-                sh 'docker ps'
-            }
-        }
-
-
         stage('Login to Docker Hub') {
             steps {
                 withCredentials([string(credentialsId: 'test_pass', variable: 'DockerPass')]) {
-                    sh '''
-                        echo "Logging into Docker Hub..."
-                        docker login -u wathsan -p $DockerPass
-                    '''
+                    sh 'echo $DockerPass | docker login -u $DOCKER_HUB_USER --password-stdin'
                 }
             }
         }
@@ -56,29 +72,28 @@ pipeline {
         stage('Push Images to Docker Hub') {
             steps {
                 sh '''
-                    echo "Tagging backend and frontend images..."
-                    docker tag dev-ops-sem5-pipeline-backend:latest wathsan/diary-backend:latest
-                    docker tag dev-ops-sem5-pipeline-frontend:latest wathsan/diary-frontend:latest
-
-                    echo "Pushing backend image..."
-                    docker push wathsan/diary-backend:latest
-
-                    echo "Pushing frontend image..."
-                    docker push wathsan/diary-frontend:latest
+                    docker build -t $DOCKER_HUB_USER/diary-backend:latest ./backend
+                    docker build -t $DOCKER_HUB_USER/diary-frontend:latest ./frontend
+                    docker push $DOCKER_HUB_USER/diary-backend:latest
+                    docker push $DOCKER_HUB_USER/diary-frontend:latest
                 '''
             }
         }
 
-
+        stage('Deploy to EC2') {
+            steps {
+                // Transfer compose.yml and start containers on remote host
+                sh """
+                    scp -o StrictHostKeyChecking=no compose.yml ubuntu@${env.EC2_PUBLIC_IP}:/home/ubuntu/
+                    ssh -o StrictHostKeyChecking=no ubuntu@${env.EC2_PUBLIC_IP} "export EC2_PUBLIC_IP=${env.EC2_PUBLIC_IP} && docker compose pull && docker compose up -d"
+                """
+            }
+        }
     }
 
     post {
         always {
-            echo 'Cleaning up: stopping containers'
-            sh 'docker compose down -v'
-            echo 'login out from Docker Hub'
             sh 'docker logout'
-            echo 'Removing dangling images'
             sh 'docker image prune -f'
         }
     }
