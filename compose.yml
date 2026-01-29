@@ -12,9 +12,7 @@ services:
       - mongo-data:/data/db
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USER}/diary-backend:latest
     container_name: diary-backend
     ports:
       - "8081:8080"
@@ -25,9 +23,7 @@ services:
       - mongodb
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USER}/diary-frontend:latest
     container_name: diary-frontend
     ports:
       - "5173:5173"

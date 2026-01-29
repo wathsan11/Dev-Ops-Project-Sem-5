@@ -118,7 +118,7 @@ pipeline {
                             sh '''
                                 printf "Testing SSH connection...\n"
                                 scp -i ${SSH_KEY} -o StrictHostKeyChecking=no compose.yml ubuntu@${INSTANCE_IP}:/home/ubuntu/
-                                ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ubuntu@${INSTANCE_IP} "export EC2_PUBLIC_IP=${INSTANCE_IP} && docker compose pull && docker compose up -d"
+                                ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ubuntu@${INSTANCE_IP} "export EC2_PUBLIC_IP=${INSTANCE_IP} && export DOCKER_HUB_USER=${DOCKER_HUB_USER} && docker compose pull && docker compose up -d"
                             '''
                         }
                     } catch (Exception e) {
