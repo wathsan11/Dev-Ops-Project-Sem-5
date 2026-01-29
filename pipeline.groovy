@@ -4,7 +4,6 @@ pipeline {
     environment {
         AWS_REGION = 'ap-south-1'
         DOCKER_HUB_USER = 'wathsan'
-        EC2_PUBLIC_IP = ''
     }
 
     stages {
@@ -31,9 +30,10 @@ pipeline {
                         sh 'terraform apply -auto-approve'
                         script {
                             def ip = sh(script: "terraform output -raw instance_public_ip", returnStdout: true).trim()
+                            echo "DEBUG: Raw IP from Terraform: '${ip}'"
                             if (ip && ip != "null" && ip != "") {
-                                env.EC2_PUBLIC_IP = ip
-                                echo "Successfully captured EC2 Public IP: ${env.EC2_PUBLIC_IP}"
+                                env.INSTANCE_IP = ip
+                                echo "Successfully captured EC2 Public IP: ${env.INSTANCE_IP}"
                             } else {
                                 error "Failed to capture EC2 Public IP. Terraform output was: '${ip}'"
                             }
@@ -48,7 +48,7 @@ pipeline {
                 dir('ansible') {
                     // Note: Ensure the SSH key is available to Jenkins
                     sh """
-                        echo "[app_servers]\n${env.EC2_PUBLIC_IP} ansible_user=ubuntu ansible_ssh_private_key_file=/var/jenkins_home/.ssh/id_rsa" > inventory.ini
+                        echo "[app_servers]\n${env.INSTANCE_IP} ansible_user=ubuntu ansible_ssh_private_key_file=/var/jenkins_home/.ssh/id_rsa" > inventory.ini
                         ansible-playbook -i inventory.ini playbook.yml --ssh-common-args='-o StrictHostKeyChecking=no'
                     """
                 }
@@ -99,8 +99,8 @@ pipeline {
             steps {
                 // Transfer compose.yml and start containers on remote host
                 sh """
-                    scp -o StrictHostKeyChecking=no compose.yml ubuntu@${env.EC2_PUBLIC_IP}:/home/ubuntu/
-                    ssh -o StrictHostKeyChecking=no ubuntu@${env.EC2_PUBLIC_IP} "export EC2_PUBLIC_IP=${env.EC2_PUBLIC_IP} && docker compose pull && docker compose up -d"
+                    scp -o StrictHostKeyChecking=no compose.yml ubuntu@${env.INSTANCE_IP}:/home/ubuntu/
+                    ssh -o StrictHostKeyChecking=no ubuntu@${env.INSTANCE_IP} "export EC2_PUBLIC_IP=${env.INSTANCE_IP} && docker compose pull && docker compose up -d"
                 """
             }
         }
