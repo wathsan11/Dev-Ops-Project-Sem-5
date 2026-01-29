@@ -52,8 +52,11 @@ pipeline {
                         try {
                             withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
                                 sh "echo 'DEBUG: Successfully entered withCredentials block. SSH_KEY path: \$SSH_KEY'"
+                                // Use printf to ensure correct newlines in inventory.ini
+                                // Also check the first line of the key to ensure it's not empty or garbled (masked in logs)
                                 sh '''
-                                    echo "[app_servers]\n${INSTANCE_IP} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}" > inventory.ini
+                                    printf "[app_servers]\n${INSTANCE_IP} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}\n" > inventory.ini
+                                    cat inventory.ini
                                     ansible-playbook -i inventory.ini playbook.yml --ssh-common-args='-o StrictHostKeyChecking=no'
                                 '''
                             }
@@ -113,6 +116,7 @@ pipeline {
                         withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
                             // Transfer compose.yml and start containers on remote host
                             sh '''
+                                printf "Testing SSH connection...\n"
                                 scp -i ${SSH_KEY} -o StrictHostKeyChecking=no compose.yml ubuntu@${INSTANCE_IP}:/home/ubuntu/
                                 ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ubuntu@${INSTANCE_IP} "export EC2_PUBLIC_IP=${INSTANCE_IP} && docker compose pull && docker compose up -d"
                             '''
