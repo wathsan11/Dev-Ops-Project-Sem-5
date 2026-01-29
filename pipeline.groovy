@@ -49,16 +49,18 @@ pipeline {
                     script {
                         echo "DEBUG: Starting Ansible stage"
                         echo "DEBUG: INSTANCE_IP is '${env.INSTANCE_IP}'"
-                        if (!env.INSTANCE_IP) {
-                            error "INSTANCE_IP is not set! Did Terraform stage fail to capture it?"
+                        try {
+                            withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                                sh "echo 'DEBUG: Successfully entered withCredentials block. SSH_KEY path: \$SSH_KEY'"
+                                sh '''
+                                    echo "[app_servers]\n${INSTANCE_IP} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}" > inventory.ini
+                                    ansible-playbook -i inventory.ini playbook.yml --ssh-common-args='-o StrictHostKeyChecking=no'
+                                '''
+                            }
+                        } catch (Exception e) {
+                            echo "ERROR in Ansible stage: ${e.getMessage()}"
+                            error "Failed during Ansible configuration: ${e.getMessage()}"
                         }
-                    }
-                    withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
-                        sh "echo 'DEBUG: Inside withCredentials block, SSH_KEY variable is set'"
-                        sh """
-                            echo "[app_servers]\n${env.INSTANCE_IP} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}" > inventory.ini
-                            ansible-playbook -i inventory.ini playbook.yml --ssh-common-args='-o StrictHostKeyChecking=no'
-                        """
                     }
                 }
             }
@@ -106,12 +108,19 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
-                    // Transfer compose.yml and start containers on remote host
-                    sh """
-                        scp -i ${SSH_KEY} -o StrictHostKeyChecking=no compose.yml ubuntu@${env.INSTANCE_IP}:/home/ubuntu/
-                        ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ubuntu@${env.INSTANCE_IP} "export EC2_PUBLIC_IP=${env.INSTANCE_IP} && docker compose pull && docker compose up -d"
-                    """
+                script {
+                    try {
+                        withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                            // Transfer compose.yml and start containers on remote host
+                            sh '''
+                                scp -i ${SSH_KEY} -o StrictHostKeyChecking=no compose.yml ubuntu@${INSTANCE_IP}:/home/ubuntu/
+                                ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ubuntu@${INSTANCE_IP} "export EC2_PUBLIC_IP=${INSTANCE_IP} && docker compose pull && docker compose up -d"
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo "ERROR in Deploy stage: ${e.getMessage()}"
+                        error "Failed during Deployment: ${e.getMessage()}"
+                    }
                 }
             }
         }
