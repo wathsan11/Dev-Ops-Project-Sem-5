@@ -46,11 +46,12 @@ pipeline {
         stage('Configuration - Ansible') {
             steps {
                 dir('ansible') {
-                    // Note: Ensure the SSH key is available to Jenkins
-                    sh """
-                        echo "[app_servers]\n${env.INSTANCE_IP} ansible_user=ubuntu ansible_ssh_private_key_file=/var/jenkins_home/.ssh/id_rsa" > inventory.ini
-                        ansible-playbook -i inventory.ini playbook.yml --ssh-common-args='-o StrictHostKeyChecking=no'
-                    """
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                        sh """
+                            echo "[app_servers]\n${env.INSTANCE_IP} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}" > inventory.ini
+                            ansible-playbook -i inventory.ini playbook.yml --ssh-common-args='-o StrictHostKeyChecking=no'
+                        """
+                    }
                 }
             }
         }
@@ -97,11 +98,13 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                // Transfer compose.yml and start containers on remote host
-                sh """
-                    scp -o StrictHostKeyChecking=no compose.yml ubuntu@${env.INSTANCE_IP}:/home/ubuntu/
-                    ssh -o StrictHostKeyChecking=no ubuntu@${env.INSTANCE_IP} "export EC2_PUBLIC_IP=${env.INSTANCE_IP} && docker compose pull && docker compose up -d"
-                """
+                withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                    // Transfer compose.yml and start containers on remote host
+                    sh """
+                        scp -i ${SSH_KEY} -o StrictHostKeyChecking=no compose.yml ubuntu@${env.INSTANCE_IP}:/home/ubuntu/
+                        ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ubuntu@${env.INSTANCE_IP} "export EC2_PUBLIC_IP=${env.INSTANCE_IP} && docker compose pull && docker compose up -d"
+                    """
+                }
             }
         }
     }
