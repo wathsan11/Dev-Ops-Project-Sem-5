@@ -10,6 +10,7 @@ pipeline {
     stages {
         stage('SCM Checkout') {
             steps {
+                echo "DEBUG: CHECKING OUT SOURCE CODE - VERSION 2.0 (FIXED IP CAPTURE)"
                 retry(3) {
                     git branch: 'main', url: 'https://github.com/wathsan11/Dev-Ops-Project-Sem-5.git'
                 }
