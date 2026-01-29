@@ -14,7 +14,7 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // allow all endpoints
-                        .allowedOrigins("http://localhost:5173") // your React dev server
+                        .allowedOriginPatterns("*") // allow any origin to support dynamic EC2 IPs
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
