@@ -19,7 +19,19 @@ const NotesPage = ({ setPage }) => {
   const fetchNotes = async () => {
     try {
       const res = await api.get(`/api/notes/user/${username}`)
-      setNotes(res.data || [])
+      const data = res.data || []
+      const normalized = data.map(n => {
+        let id = n?._id?.$oid ?? (typeof n?._id === 'string' ? n._id : (n?._id && typeof n._id.toString === 'function' ? n._id.toString() : undefined))
+        if (!id) {
+          try {
+            id = JSON.stringify(n?._id)
+          } catch (e) {
+            id = undefined
+          }
+        }
+        return { ...n, id }
+      })
+      setNotes(normalized)
     } catch (err) {
       console.error('FETCH NOTES ERROR:', err.response || err)
       const errorMsg = err.response?.data?.message || err.response?.data || err.message || 'Could not load notes'
@@ -99,7 +111,7 @@ const NotesPage = ({ setPage }) => {
         {notes.length === 0 && <div className="text-gray-600">No notes yet.</div>}
         <div className="space-y-4">
           {notes.map((n, index) => (
-            <div key={n._id?.$oid || n._id?.toString() || index} className="border rounded p-4 bg-white">
+            <div key={n.id ?? index} className="border rounded p-4 bg-white">
               <div className="text-sm text-gray-500 mb-1">{n.noteDate}</div>
               <div className="font-semibold text-lg">{n.title}</div>
               <div className="mt-2 text-gray-800 whitespace-pre-wrap">{n.content}</div>
