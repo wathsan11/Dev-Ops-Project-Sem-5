@@ -25,6 +25,7 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     dir('terraform') {
+                        sh 'ls -la' // Debug: see if main.tf exists
                         sh 'terraform init'
                         sh 'terraform apply -auto-approve'
                         script {
@@ -63,17 +64,24 @@ pipeline {
 
         stage('Login to Docker Hub') {
             steps {
-                withCredentials([string(credentialsId: 'test_pass', variable: 'DockerPass')]) {
+                withCredentials([string(credentialsId: 'docker-hub-creds', variable: 'DockerPass')]) {
                     sh 'echo $DockerPass | docker login -u $DOCKER_HUB_USER --password-stdin'
                 }
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                sh '''
+                    docker build -t $DOCKER_HUB_USER/diary-backend:latest ./backend
+                    docker build -t $DOCKER_HUB_USER/diary-frontend:latest ./frontend
+                '''
             }
         }
 
         stage('Push Images to Docker Hub') {
             steps {
                 sh '''
-                    docker build -t $DOCKER_HUB_USER/diary-backend:latest ./backend
-                    docker build -t $DOCKER_HUB_USER/diary-frontend:latest ./frontend
                     docker push $DOCKER_HUB_USER/diary-backend:latest
                     docker push $DOCKER_HUB_USER/diary-frontend:latest
                 '''

@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1" # You can change this to your preferred region
+  region = "ap-south-1"
 }
 
 resource "aws_vpc" "main" {
@@ -25,7 +25,7 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
-  availability_zone       = "us-east-1a"
+  availability_zone       = "ap-south-1a"
 
   tags = {
     Name = "diary-app-public-subnet"
@@ -100,7 +100,7 @@ resource "aws_security_group" "allow_web" {
 }
 
 resource "aws_instance" "app_server" {
-  ami           = "ami-0c7217cdde317cfec" # Ubuntu 22.04 LTS in us-east-1
+  ami           = "ami-03bb6d83c60fc5f7c" # Ubuntu 22.04 LTS in ap-south-1
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.allow_web.id]
