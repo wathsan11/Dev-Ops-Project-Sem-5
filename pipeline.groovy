@@ -29,7 +29,13 @@ pipeline {
                         sh 'terraform init'
                         sh 'terraform apply -auto-approve'
                         script {
-                            env.EC2_PUBLIC_IP = sh(script: "terraform output -raw instance_public_ip", returnStdout: true).trim()
+                            def ip = sh(script: "terraform output -raw instance_public_ip", returnStdout: true).trim()
+                            if (ip && ip != "null" && ip != "") {
+                                env.EC2_PUBLIC_IP = ip
+                                echo "Successfully captured EC2 Public IP: ${env.EC2_PUBLIC_IP}"
+                            } else {
+                                error "Failed to capture EC2 Public IP. Terraform output was: '${ip}'"
+                            }
                         }
                     }
                 }
