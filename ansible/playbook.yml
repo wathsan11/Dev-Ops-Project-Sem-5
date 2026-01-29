@@ -16,6 +16,14 @@
           - gnupg
         state: present
 
+    - name: Remove old Docker GPG key and repository
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/keyrings/docker.gpg
+        - /etc/apt/sources.list.d/docker.list
+
     - name: Create directory for Docker GPG key
       file:
         path: /etc/apt/keyrings
@@ -24,7 +32,7 @@
 
     - name: Download Docker GPG key
       shell: |
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
 
     - name: Ensure correct permissions on GPG key
       file:
