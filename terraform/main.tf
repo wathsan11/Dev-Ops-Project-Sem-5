@@ -101,7 +101,7 @@ resource "aws_security_group" "allow_web" {
 
 resource "aws_instance" "app_server" {
   ami           = "ami-03bb6d83c60fc5f7c" # Ubuntu 22.04 LTS in ap-south-1
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
   subnet_id     = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.allow_web.id]
   key_name      = "diary-app-key" # Ensure you have this key in AWS
