@@ -1,0 +1,4 @@
+# Allow only the specific files required for the build
+!pom.xml
+!src/
+!target/backend-0.0.1-SNAPSHOT.jar
