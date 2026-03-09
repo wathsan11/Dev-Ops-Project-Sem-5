@@ -56,7 +56,7 @@ const Login = ({ onSwitchToSignup, onLoginSuccess }) => {
     <div className="flex items-center justify-center h-screen bg-gradient-to-br from-yellow-100 via-orange-100 to-pink-100">
       <div className="bg-white shadow-2xl rounded-3xl p-10 w-full max-w-md border border-orange-200">
         <h1 className="text-4xl font-bold text-center text-orange-500 mb-6">
-          Wathsan
+          Diary App
         </h1>
         <p className="text-center text-gray-600 mb-8">
           Enter your diary account to continue journaling.
