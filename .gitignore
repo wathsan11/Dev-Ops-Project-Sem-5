@@ -1,0 +1,37 @@
+# IDE and System Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Environment and Secrets
+.env
+*.pem
+*.key
+
+# Backend (Maven/Spring Boot)
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+backend/build_log.txt
+
+# Frontend (React/Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/stats.html
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform.lock.hcl
+
+# Infrastructure / Ansible
+ansible/inventory.ini
+
+# Docker
+*.tar
+*.tar.gz
