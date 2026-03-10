@@ -16,3 +16,6 @@ jobs:
           curl -v -X POST \
           "${{ secrets.JENKINS_URL }}/job/${{ secrets.JENKINS_JOB_NAME }}/build" \
           --user "${{ secrets.JENKINS_USER }}:${{ secrets.JENKINS_TOKEN }}"
+
+
+#Github Actions 
